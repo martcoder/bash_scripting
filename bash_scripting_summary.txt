@@ -1,0 +1,445 @@
+====USEFUL COMMANDS=====================================================
+
+man == command for getting a manual of other commands,
+e.g. man -k chmod == shows that there are multiple chmod commands
+e.g. man -s 2 chmod == show manual for chmod command 2
+
+ls == list the files in this dir
+... -l == long-format, -a == show hidden too, -t == sort by timestamp, -r == reverse order, -d == ls dir details
+... -R == ls not only this but all subdirs too, -F == classify at end of filename...* is file; / is dir; @ is link
+... -Ab == show also filenames that include special chars such as control chars, will show them in octal
+
+last = list of recent logins
+
+who = list of users currently logged in
+
+head FILENAME = look at first 10 lines of file
+e.g. head -1 == look at first 1 line of file
+
+tail FILENAME = look at last 10 lines of file
+e.g. tail -1 == look at last 1 lines of file
+e.g. tail -f FILENAME == keep watching file for writes :) VERY USEFUL FOR LOGS
+
+tee = used to output to file and stdout at same time
+e.g. tail -f /var/log/syslog | tee -a copyOfSyslog.txt = appends syslog appends to copy and terminal
+
+date = display current date and time, %b is abbrev month, %a abbr weekday, %A full weekday
+e.g. date +"%Y-%m-%d_%H-%M-%S" displays YYYY-MMM-DDD_hh-mm-ss
+e.g. date +"%A %d %b"
+
+test = tests file characteristics, 
+... e.g. test -f filename tests if it is a regular file, not, say, a dir
+... e.g. test -r filename tests if it has read permission
+... e.g. the following tests if there is 1 parameter, that it is a readable file
+....     if test \( \( -f $1 -a -r $1 \) -a $# -eq 1 \) 
+
+du = disk usage, how much space folders and files occupy
+e.g. du -h == display list of disk usage in human-readable format for all folders recursively from your current dir
+e.g. du -s == display a summary of disk usage for your current dir
+e.g. du -a == display a list of disk usage for all files AND folders recursively from your current dir
+e.g. du * == display a list of disk usage for all files in your current dir and all folders recursively from your current dir
+.............strangely this wont display files in recursive folders, only files in current dir, weird! 
+e.g. du -s * == display summary of files and folders in your current dir - not recursive
+e.g. du -s * | sort -n | more == useful command for sorting by size 
+
+diff file1 file2 = compare contents of two text files
+e.g. output is d for lines that are only in file1, a for lines that are only in file2, c for lines that are in both but differ. 
+
+cmp = compare contents of two binary files, use -l for a complete listing (pipe into more)
+
+kill = command that sends a signal to a process in the format: kill -signal process-id
+e.g. kill -9 1934
+some common signals are: 1 hangup, 2 interrupt (this is what ^C does), 
+3 quit ( causes core dump ), 9 kill ( cannot be caught), 15 terminate (die gracefully)
+
+
+----END OF USEFUL COMMANDS---------------------------------------------
+
+====EXPANSION AND EXPRESSIONS============================================
+
+parameter expansion = parses the contents of a command and gets the values before executing
+$( ) OR ` ` gets expanded with the contents being executed 
+$[ ] used for evaluating simple calculations
+$(( )) also used for evaluating simple calculations
+
+e.g. more $( find -type f -name testfile.txt ) will first expand whats inside
+.... the $( ) then use that in the overall command. Backticks also work, ` `
+...  so the command will end up being executed as more ./testfile.txt
+e.g. $[ ] is used for calculations such as echo $[ 1 + 3 ] will print 4
+...  although $(( )) is recommended as latest version for that.
+
+expr does simple calculations taking 2 parameters
+e.g. echo $( expr 1 + 3 )  will print 4
+
+alternatively, as mentioned above, you can simply use $(( )) to calculate things, e.g. 
+read first; # read line from stdin and store in $first variable
+read second; # read line from stdin and store in $second variable
+echo $(( $first + $second )); # calculates and echoes the result
+echo $(( $first - $second )); # calculates and echoes the result
+echo $(( $first * $second )); # calculates and echoes the result
+echo $(( $first / $second )); # calculates and echoes the result
+
+bc = A slightly more useful calculator capable of floating points is bc, 
+.... however you need to echo a string into the bc and specify number of 
+.... significant figures using scale
+e.g. echo "scale=4; (1.5 * 7)/3" | bc    ... will output 3.5000
+
+----END OF EXPANSION AND EXPRESSIONS-----------------------------------
+
+
+
+====PARAMETERS AND CODES=================================================
+
+set = sets parameters, e.g. set haha hehe; echo $2 will print hehe
+        can also use curly brackets> set {10,11} # echo $1 will print 10; echo $2 will print 11
+
+$# = number of params
+
+$@ = the array of parameters
+e.g. in a script you can loop over $@ OR "$@" to access each parameter
+
+$? = the latest exit code, e.g. 0 is good, 1 is problem, 2 is error
+... e.g. ls /etc/passwd; echo $?; will print 0
+... e.g. cat /etc/pwrong; echo $?; will print 1
+... e.g. ls /etc/pwrong; echo $?; will print 2
+... e.g. test -x textfilename; echo $?; will print 1 if no execute permission
+
+----END OF PARAMETERS AND CODES------------------------------------------
+
+====FILTERS=====================================================
+
+grep = used for finding lines containing particular text match
+e.g. grep sometext filename
+e.g. grep at filename == show all lines that contain the text at even inside words, in this file
+e.g. grep ^a filename == show all lines starting with a in that file, uses basic regex
+e.g. grep -E "^a" filename == same as above, except -E using extended regex
+NB didnt use quotations for some examples, it works without quotations for some very basic
+...regex but some things need to be inside quotations so best practise is to use quotations
+...for basic and extended regex when using grep. 
+...The difference between basic regex and extended are a few things such as brackets, 
+...brackets are useful as metacharacters in regex, they can group text together but are considered
+...not part of the match, e.g. they are invisible metachars in your match pattern...
+...e.g. grep "(^a)" filename == doesnt match as it is looking for brackets before start
+...e.g. grep "\(^a\)" filename == works, basic regex wants you to escape grouping brackets
+...e.g. grep -E "(^a)" filename == works, extended regex doesnt require you to escape grouping brackets
+...e.g. grep -E "\(^a\)" filename == this would not work as you are trying to match an actual bracket
+......before the start of a line. 
+e.g. grep alm . -R == show occurences of text alm in all files within this dir and recursive folders
+e.g. grep alm . -R -l == print just filenames of those files which contain that text 
+
+sed = used for filtering out or replacing text in a character stream  
+    sed "s/hehehe/hohoho/g" filename  ==  will replace 'hehehe' with 'hohoho'
+... note the s means that this is a regex match
+... note the g means that each occurence on every line, instead of the default of 
+... just the first occurence on each line. 
+
+... sed "/hehehe/d" filename    == will delete the lines containing hehehe
+... note the d is what makes it delete
+
+... sed "s/hehehe//" filename   == will delete the first hehehe of each line
+... sed "s/hehehe//g" filename  == will delete every hehehe in the file
+
+awk = used for pattern matching in a character stream 
+e.g. awk -F, '/10\.99/ {print $2 " cost 10-99"}' $(find . -name menu)
+... This prints out names of dishes which cost 10.99
+... specifically it prints out field2 of the lines from the menu file
+... which contain 10.99, and field2 is the name of the dish
+... -F is used to specify the field separator, default is whitesp[ace, 
+... but here it is commas
+.e.g last | grep $(whoami) | head -1 | awk '{print "You last logged in at "$7" on "$4" "$5" "$6}'
+... This will print out when you last logged in using awk to pick out the fields from last
+
+sed with awk, expanding the last awk example, you could also include the year by using sed and date
+e.g. last | grep $(whoami) | head -1 | awk '{print "You last logged in at "$7" on "$4" "$5" "$6}' | 
+sed "s/\(.*\)/\1 $(date | awk '{print $6}')/"
+... here you're simply taking everything from the char stream and appending an awk filtered date.
+... Everything is matched with .* then this is included with \1 then a space then the date function
+... is piped into awk which filters out just the year field. 
+... There must be a simpler way to get that year field, but this is a good example of sed and awk. 
+
+find = find fromLocation options action
+e.g. find . -type f -print  == find from current folder files with type file, print results
+... -print is the default so don't really need that
+e.g. find . -name *.sh == will find all files under current dir that end in .sh
+e.g. find . -type f -name menu -exec wc -l {} \; == find all files called menu and 
+ then do a line count on each file. The -exec is for what operation to do
+ and the {} stands for each file found from the find command. So it goes through each file
+ called menu and prints the linecount, so should result in a list of linecounts. 
+e.g. find . -type f -exec grep -l "something" {} \; 2>/dev/null == this is a very useful find recipe, 
+  it find all files of type file under current dir, and executes grep -l "something" which greps through
+  each file found and searches for "something" string inside each file, the -l option of grep means that
+  the filename is printed rather than the line(s) in the file(s). So this will return a list of files
+  which contain that string. Very useful. NB the 2>/dev/null sends any errors to a blackhole, because 
+  for example if there is a file that has no read permission, it will print an error, but doing 2>/dev/null
+  means that the error will not print in the results.  
+
+2>/dev/null = sends errors to a blackhole, rather than having them print out in the results of your commands. 
+
+sort = sort -tdelimiter -k colnumber (-n) filename ... if no filename it takes from stdin 
+e.g. cat filename | sort   == sort the contents of that file sorting on the default column
+... default colnumber is first so you don't need the k
+... default sort is alphabetically so you dont need -n however this makes it sort numerically
+e.g. sort -t, -k 3 -n filename == sorts using commas as field separators, sorts on third field
+which it expects to be numeric. 
+
+----END OF FILTERS-------------------------------------------
+
+=========LOOPS AND CONDITIONALS================================================
+
+for = for loop for looping over things. for x in list; do commands; done; 
+e.g. for x in "uno one" "dos two" "tres three"; do echo $x; done;
+e.g. for x in uno dos tres; do echo $x; done; #list separation is with space
+e.g. for x in "$@"; do echo $x; done; == will echo each of the parameters
+e.g. to loop over a range of number you do: for x in {1..10} to loop over 1 to 10 as $x
+...... for x in {1..10}; do echo $x; done;
+e.g. full conditional for loop using increments of 2, also spaces within (( )) dont matter.
+...... for (( x=0; x < 10; x += 2 )); do echo $x; done;
+
+if = if [ conditionIsTrue ]; then dosomeactions; else dootheractions; fi
+OR   if [ condTrue ]; then doStuff; elif [ otherCondition ]; then doOther; else doThings; fi
+e.g. in a script where a numeric parameter was passed in:
+    if [ $# != 1 ] # if number of parameters is not 1
+    then
+	echo "Just one argument please"
+	exit $? # exit with the exit code of last command, which would be the echo so this pointless
+    elif [ $1 -ge 80 ] && [ $1 -le 100  ] # elif first parameter is > 80 & < 100
+    then
+	echo Grade is A
+    else
+	echo "Grade is Average"
+    fi
+e.g. if [ $(who | grep username >> /dev/null; echo $?;) -eq 0 ]; then echo "found user";fi; 
+e.g. testing if an input parameter is a readable file and only 1 parameter being used:
+.... if test \( \( -f $1 -a -r $1 \) -a $# -eq 1 \)
+.... if ! test \( \( -f $1 -a -r $1 \) -a $# -eq 1 \)    ... may be more useful
+
+for with if example, also shows using command substitution in the for list:
+e.g. this will find all files containing the text 'rink' and then copy them into folders called dir+filename
+for afile in $(grep -l rink . -R); 
+do 
+  if test -f $afile;  
+  then 
+    filteredfile=$(echo "$afile" | grep -Eo "([^/.]+)(\.[^/]+)?$" | sed "s/\(.*\)\..*/\1/"); 
+    mkdir dir$filteredfile; 
+    echo "Copying file $afile to folder ./dir$filteredfile/"; 
+    cp $afile ./dir$filteredfile/; 
+  fi; 
+done;
+
+e.g. IF OR (also shows string comparison)
+read a;
+if [ $a = "y" ] || [ $a = "Y" ]; # NB for strings using = type comparison
+then 
+ echo "YES";
+else
+ echo "NO";
+fi;
+
+e.g IF integer comparison
+read a; # read 3 triangle sides lengths
+read b;
+read c;
+# NB for integers, use -eq style comparison
+if [ $a -eq $b ] && [ $b -eq $c ]; # if all sides are equal length
+then
+ echo "EQUILATERAL";
+else
+ if [ $a -eq $b ] || [ $b -eq $c ] || [ $c -eq $a ]; # if two sides are equal length
+ then
+  echo "ISOSCELES";
+ else
+  echo "SCALENE"; # if no sides are the same length
+ fi
+fi
+
+
+WHILE Loops: 
+e.g. increment using stepsize 1 until limiter reached. NB $(( )) evaluates expression. 
+NB: also note that setting a variable requires no spaces, e.g. x=2 rather than x = 2 
+x=-2; while [ $x -lt 10 ]; do x=$(($x + 1)); echo $x; done;
+
+The same logic but done a different way is as follows, using test and expr:
+You need to use test for the condition for true or false, NB return code of 0 is true in bash
+e.g. set 10; #This sets the $1 variable 
+INCREMENT=1; 
+while test $INCREMENT -lt $1; 
+do 
+  INCREMENT=`expr $INCREMENT + 1`; echo $INCREMENT; 
+done;  
+
+Although you don't HAVE to do it that way, here is alternative way to use conditional while loop which 
+increments inside it:
+NUMBER=1;
+while [[ $NUMBER -lt 100 ]];
+do
+    echo $NUMBER;
+    NUMBER=$(( $NUMBER + 2)); # add 2 to give only odd numbers
+done;
+
+read = read a line from std input, if you redirect a file into the script then it will read
+.....  the first line from that file....
+e.g. read Line < filename; echo $Line 
+e.g. echo "enter a line > "; read Line; echo You read $Line;
+e.g. cat filename | while read Line; do echo "just read: $Line"; done; ... reads each line in turn 
+
+
+e.g. while and read, being used to read integers from terminal input line by line and sum the total:
+  SUMMER=0;
+  while read Line;
+  do
+    if [ $Line = "=" ]
+    then break;
+    fi
+
+    # There has to be a better way to test that only integers in input, but for now...
+    RESULT=$(echo "$Line * 1" | bc 2> /dev/null); 
+    if test $RESULT; 
+    then 
+	if [ "$RESULT" -gt 0 ]; 
+	then 
+		SUMMER=$( expr $SUMMER + $Line );
+	else 
+		echo "Please enter an integer only, ignoring this entry"; 
+	fi; 
+    else echo "Please enter an integer only, ignoring this entry"; 
+    fi;
+  done;
+  echo Total is $SUMMER;
+
+----END OF LOOPS AND CONDITIONALS---------------------------------------------
+
+=====FUNCTIONS=================================================================================
+
+functions in bash....
+# A function is used to prevent repeating code, although note that bash functions 
+# are not modular the same way say Java functions are, because for example you 
+# cannot return data, but instead can only return the success code. 
+# However all variables that are not parameters are global and public, so you can use 
+# those to assign values and then access them outside the function. 
+
+e.g. a quiz ... 
+echo "Answer each question with t or f .... for true or false"
+NUMCORRECT=0
+askQuestion() {
+	NUMQUESTIONS=$( expr $NUMQUESTIONS + 1 )
+	echo -n "$1 > " # -n keeps this on the same line, omitting the newline
+	read Answer     # reads input from stdin and stores value in the Answer variable e.g. reads input from terminal or wherever...
+	if [ $Answer = $2 ];
+	then
+		NUMCORRECT=$(expr $NUMCORRECT + 1)
+	fi
+}
+
+askQuestion "Libraries are free" t
+askQuestion "Linux is free" t
+askQuestion "The world is flat" f
+
+if [ $NUMQUESTIONS -eq $NUMCORRECT  ]
+then
+	echo "You got them all right"
+else
+	echo "You got $NUMCORRECT out of $NUMQUESTIONS, no worries, you can do it next time. "
+fi
+
+
+-----END OF FUNCTIONS----------------------------------------------------------------------
+
+=====SIGNALS===============================================================================
+
+some common signals are:
+1 hangup
+2 interrupt (this is what ^C does)
+3 quit ( causes core dump )
+9 kill ( cannot be caught)
+15 terminate (die gracefully)
+
+trap = waits for signals then executes command-list once any signal in the list is received
+.... FORMAT is: trap 'command list' signal list
+e.g. this sleeps while waiting for signals, on receiving 1 3 or 15 it logs date, echoes message, then exits; 
+on recieving 2 it logs date into same file, prints interrupted, then just continues.... 
+trap 'date >> ./test$$.txt; echo ending script; exit 1' 1 3 15
+trap 'date >> ./test$$.txt; echo interrupting;' 2
+touch ./test$$.txt
+echo Created ./test$$.txt
+while true
+do
+	echo ...sleeping...
+	sleep 4
+done
+exit 0
+
+
+-----END OF SIGNALS-----------------------------------------------------------------------
+
+=====DEBUGGING================================================================================
+to debug a script use options like x and v to execute commands and print shell input as read
+e.g. sh -xv ./quiz   
+... other options are -n for just check syntax, -u for looking for uninitialised variables
+
+Variables being lost in subshell = redirection in a loop can cause a subshell to be launched
+...without you noticing, and values assigned to variables within that are not recognnised outside 
+... the loop/subshell e.g. the following script shows example of a while loop that has redirection 
+... from cat which means variable assignments within the loop cannot be accessed outside the loop, 
+... with the buggy code followed by the fixed code:
+  #!/bin/sh
+  # This script will print the numbered lines of a file, then finally the total number of lines. 
+
+  # Needs 1 param which is a readable file with lines of text
+  if ! test \( \( -f $1 -a -r $1 \) -a $# -eq 1 \)
+  then
+	echo "Needs 1 param which is a readable file with lines of text"
+	exit 1;
+  fi
+
+  # Firstly, the buggy code
+  buggyCode()
+  {
+    Numline=0 
+    cat $1 | while read Line
+    do
+       Numline=`expr $Numline + 1`
+       echo $Numline: $Line
+    done
+
+    echo $1 had $Numline lines
+  }
+  ######################
+
+  # Now, the fixed code... the problem is that the redirection in the while loop
+  # results in variable assignings being lost outside of the loop as the redirectino
+  # launches a subshell ( i think ) !!! So the messy solution is to write the results
+  # in the subshell to a file, then read in from that file outside the loop, eugh. 
+  fixedCode()
+  {
+    Numline=0
+    touch LinenumFile
+    cat $1 | while read Line
+    do
+       Numline=`expr $Numline + 1`
+       echo $Numline: $Line
+       echo $Numline > LinenumFile
+    done
+
+    read HOWMANY < LinenumFile
+    echo $1 had $HOWMANY lines
+  }
+
+  echo "Running buggy code now, which fails to print number of lines at the end:"
+  buggyCode $1
+  echo " "
+  echo "Running fixed code now, which is able to print number of lines at the end:"
+  fixedCode $1
+
+  exit 0
+
+
+-----END OF DEBUGGING---------------------------------------------------------------------
+
+
+=====SIMPLE ENCRYPTION/DECRYPTION==============================================================
+
+openssl aes-256-cbc -salt -in testToEncrypt.txt -out encrypted.txt
+
+openssl aes-256-cbc -d -in encrypted.txt
+
+----END OF SIMPLE ENCRYPTION/DECRYPTION--------------------------------------------------------
